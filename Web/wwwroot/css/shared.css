@@ -1,0 +1,8 @@
+﻿.div-filtro {
+    padding-top: 5px;
+    display: none;
+}
+
+.border-start-danger {
+    border-left: 2px solid #f64e60 !important
+}

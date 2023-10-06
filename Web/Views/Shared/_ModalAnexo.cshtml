@@ -1,0 +1,317 @@
+﻿@model Web.ViewModel.AnexoViewModel
+
+<div id="modal-cadastrar-anexo" class="modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header d-flex align-items-center">
+                <h4 class="modal-title" id="myModalLabel">Arquivos</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modal-anexo-form" class="collapse">
+                    <div class="form-group mb-4">
+                        <label>Selecione os arquivos</label>
+                        <input class="form-control" type="file" name="FileUpload[]" id="modal-anexo-file-multiple" multiple accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                    </div>
+                </div>
+
+                <div id="modal-anexo-parametros-adicionais-div"></div>
+
+                <div id="modal-anexo-resumo" class="collapse row"></div>
+            </div>
+            <div class="modal-footer collapse" id="modal-anexo-footer">
+                <button id="btn-modal-anexo-enviar" onclick="EnviarAnexos()" type="button" class="btn btn-light-info text-info waves-effect btn-modal-anexo" style="display:none">Enviar</button>
+                <button id="btn-modal-anexo-aguarde" class="btn btn-light-info text-info btn-modal-anexo" type="button" disabled style="display:none"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Aguarde...</button>
+                <button id="btn-modal-anexo-continuar" onclick="FinalizarEnvioAnexos()" type="button" class="btn btn-light-info text-info waves-effect btn-modal-anexo" style="display:none">Continuar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-anexo-modelo-arquivo" style="display:none">
+    <div class="col-6 mb-3" id="modal-anexo-modelo-div-#ID#">
+        <div class="text-center rounded-3 border py-3 d-block  card-hover">
+            <i class="ri-folder-upload-fill text-primary display-6"></i>
+            <span class="text-muted d-block">#ARQUIVO_NOME#</span>
+            <div class="mt-1 p-2">
+                <div class="progress" style="height: 14px;">
+                    <div class="progress-bar progress-bar-striped bg-info progress-bar-animated text-white" id="progress-#ID#" style="width: 0%; height: 6px" role="progressbar">0%</div>
+                </div>
+            </div>
+            <div class="ps-4 pe-4 collapse text-danger text-start" id="div-anexo-modelo-alerta-#ID#">
+                <i data-feather="info" class="fill-white feather-sm me-2"></i>
+                <span id="span-anexo-modelo-alerta-#ID#"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-anexo-input-text-modelo" style="display:none">
+    <div class="form-group mb-4" style="display:#DISPLAY#" title="#TITLE#">
+        <label>#LABEL#</label>
+        <input type="text" class="form-control #CLASS# #CLASS_INPUT#" name="#NAME#" id="#ID#" value="#VALUE#">
+    </div>
+</div>
+
+<div id="modal-anexo-input-checkbox-modelo" style="display:none">
+    <input type="checkbox" class="form-check-input #CLASS# #CLASS_INPUT#" name="#NAME#" id="#ID#" value="#VALUE#">
+    <label class="form-check-label" l>#LABEL#</label>
+</div>
+
+<div id="modal-anexo-input-radio-modelo" style="display:none">
+    <div class="form-check">
+        <input class="form-check-input #CLASS_INPUT#" type="radio" name="#NAME#" id="#ID#" value="#VALUE#">
+        <label class="form-check-label" for="#ID#">#TEXT#</label>
+    </div>
+</div>
+
+<script>
+    var arquivosUpload = [];
+    var anexoTipoIdTemp = 0;
+    var objetoIdTemp = "";
+    var anexoArquivoTipoIdTemp = 0;
+    var AfterModalSalvarAnexo = null;
+    var resultados = [];
+
+    function FinalizarEnvioAnexos(){
+        $('#modal-cadastrar-anexo').modal('hide');
+        AfterModalSalvarAnexo(resultados);
+    }
+
+    function AbrirModalCadastrarAnexo(anexoTipoId, objetoId, anexoArquivoTipoId, multiplosArquivos, After, parametrosAdicionais) {
+        arquivosUpload = [];
+        AfterModalSalvarAnexo = After;
+        anexoTipoIdTemp = anexoTipoId;
+        objetoIdTemp = objetoId;
+        anexoArquivoTipoIdTemp = anexoArquivoTipoId;
+
+        var fileInput = $('#modal-anexo-file-multiple');
+        fileInput.val('');
+        if (!multiplosArquivos && fileInput.attr("multiple"))
+            fileInput.removeAttr("multiple");
+        else if (multiplosArquivos && !fileInput.attr("multiple"))
+            fileInput.addAttr("multiple");
+
+        $('.btn-modal-anexo').hide();
+        $('#modal-anexo-form').collapse('show');
+        $('#modal-anexo-resumo').collapse('hide');
+        $('#modal-anexo-footer').collapse('hide');
+        $('#modal-anexo-resumo').html('');
+
+        CriarParametrosAdicionais(parametrosAdicionais);
+
+        RequestGET(true, '@Url.RouteUrl("RotaAPI", new { controller = "Anexo", action = "CarregarFormatosAceitos"})?id=' + anexoArquivoTipoId, AfterCarregarFormatosAceitos);
+    };
+
+    function AfterCarregarFormatosAceitos(resultado) {
+        if (!resultado.Sucesso)
+            swal('', resultado.Mensagem);
+        else {
+            $('#modal-anexo-file-multiple').attr('accept', resultado.Retorno);
+            $('#modal-cadastrar-anexo').modal('show');
+        }
+    }
+
+    async function EnviarAnexos() {
+        $('.btn-modal-anexo').hide();
+        $('#btn-modal-anexo-aguarde').show();
+
+        for (const arquivoUpload of arquivosUpload) {
+            await EnviarAnexo(arquivoUpload);
+        }
+
+        $('.btn-modal-anexo').hide();
+        $('#btn-modal-anexo-continuar').show();
+    }
+
+    async function EnviarAnexo(arquivoUpload) {
+        var chunkSize = 20 * 1024 * 1024;
+        var offset = 0;
+        var totalChunks = Math.ceil(arquivoUpload.File.size / chunkSize);
+        var sentChunks = 0;
+        var id = NewId();
+        var progresso = 0;
+
+        async function EnviarProximoChunk(offset) {
+            if (offset >= arquivoUpload.File.size) {
+                // Todos os chunks foram enviados
+                HideLoading();
+                return;
+            }
+
+            var formData = GerarFormDataEnviarAnexo(arquivoUpload, offset, chunkSize, id);
+            var resultado = await GerarRequisicaoEnviarAnexo(formData);
+
+            if (resultado.Sucesso) {
+                sentChunks++;
+                progresso = (sentChunks / totalChunks) * 100;
+                GerenciarProgressoEnvioAnexo(arquivoUpload, progresso, resultado);
+                // Chama a próxima iteração
+                await EnviarProximoChunk(offset + chunkSize);
+            } else {
+                GerenciarProgressoEnvioAnexo(arquivoUpload, progresso, resultado);
+                return;
+            }
+        }
+
+        await EnviarProximoChunk(offset);
+    }
+
+    function GerarResultadoEnviarAnexo() {
+        return { Sucesso: false, Retorno: 0, Mensagem: '' };
+    }
+
+    function GerarFormDataEnviarAnexo(arquivoUpload, offset, chunkSize, id) {
+        var chunk = arquivoUpload.File.slice(offset, offset + chunkSize);
+        var formData = new FormData();
+
+        formData.append("Chunk", chunk);
+        formData.append("TotalSize", arquivoUpload.File.size);
+        formData.append("Offset", offset);
+        formData.append("Id", id);
+        formData.append("FileName", arquivoUpload.File.name);
+        formData.append("AnexoTipoId", anexoTipoIdTemp);
+        formData.append("AnexoArquivoTipoId", anexoArquivoTipoIdTemp);
+        formData.append("ObjetoId", objetoIdTemp);
+
+        $.each($('.modal-anexo-parametro-adicional-input'), function (i, element) {
+            var name = $(element).attr("name");
+            if (name.indexOf("#NAME#") < 0) {
+                formData.append(`ParametrosAdicionais[${i}].Key`, name);
+                if ($(element).attr("type") == "checkbox")
+                    formData.append(`ParametrosAdicionais[${i}].Value`, $(element).is(":checked"));
+                else if ($(element).attr("type") == "radio")
+                    formData.append(`ParametrosAdicionais[${i}].Value`, $(`input[name=${name}]:checked`).val());
+                else
+                    formData.append(`ParametrosAdicionais[${i}].Value`, $(element).val());
+            }
+        });
+
+        return formData;
+    }
+
+    async function GerarRequisicaoEnviarAnexo(formData) {
+        try {
+            const resultado = await $.ajax({
+                url: "@Url.RouteUrl("RotaAPI", new { controller = "Anexo", action = "Salvar"})",
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false
+            });
+            return resultado;
+        } catch (error) {
+            return error.responseJSON;
+        }
+    }
+
+    function GerenciarProgressoEnvioAnexo(arquivoUpload, progresso, resultado) {
+        $('#progress-' + arquivoUpload.Id).attr('style', `width: ${progresso}%`);
+        $('#progress-' + arquivoUpload.Id).text(progresso.toFixed(0) + '%');
+
+        if (!resultado.Sucesso) {
+            $('#progress-' + arquivoUpload.Id).removeClass("bg-info").addClass("bg-danger");
+            $('#span-anexo-modelo-alerta-' + arquivoUpload.Id).text(resultado.Mensagem);
+            $('#div-anexo-modelo-alerta-' + arquivoUpload.Id).collapse("show");
+            resultado.Mensagem = arquivoUpload.File.name += ": " + resultado.Mensagem;
+            resultados.push(resultado);
+        } else if (progresso >= 100) {
+            $('#progress-' + arquivoUpload.Id).removeClass("bg-info").addClass("bg-success");
+            resultado.Mensagem = arquivoUpload.File.name += ": " + resultado.Mensagem;
+            resultados.push(resultado);
+        }
+    }
+
+    $("#modal-anexo-file-multiple").change(function () {
+        var conteudo = "";
+        $.each($("#modal-anexo-file-multiple").get(0).files, function (i, file) {
+            arquivosUpload.push({ Id: i, File: file });
+            conteudo += ComporDivArquivosSelecionados(file, i);
+        });
+
+        $('#modal-anexo-resumo').html(conteudo);
+        $('#modal-anexo-form').collapse('hide');
+        $('#modal-anexo-resumo').collapse('show');
+        $('#modal-anexo-footer').collapse('show');
+        $('#btn-modal-anexo-enviar').show();
+    });
+
+    function ComporDivArquivosSelecionados(file, i) {
+        var modelo = $('#modal-anexo-modelo-arquivo').html();
+
+        modelo = modelo.replace(/#ID#/g, i);
+        modelo = modelo.replace('#ARQUIVO_NOME#', file.name);
+
+        return modelo;
+    }
+
+    //um parametro adicional deve ter este layout:
+    //var param = {
+    //    Id: "",
+    //    Label: "",
+    //    Nome: "",
+    //    Titulo: "",
+    //    Valor: "",
+    //    Oculto: false,
+    //    Tipo: ParametroAdicionalEnum.Text,
+    //    Opcoes: [{ Valor: '1', Texto: 'teste', Descricao: 'teste' }] --podendo ser nulo
+    //};
+
+    const ParametroAdicionalEnum = {
+        Text: 1,
+        TextData: 2,
+        Checkbox: 3,
+        Radio: 4
+    }
+
+    function CriarParametrosAdicionais(parametrosAdicionais) {
+        if (parametrosAdicionais == null || parametrosAdicionais == undefined || !parametrosAdicionais.length)
+            $('#modal-anexo-parametros-adicionais-div').html('');
+        else {
+            var conteudo = '';
+            $.each(parametrosAdicionais, function (i, parametroAdicional) {
+                var modelo = '';
+
+                if (parametroAdicional.Tipo == ParametroAdicionalEnum.Radio) {
+                    var template = $('#modal-anexo-input-radio-modelo').html();
+
+                    $.each(parametroAdicional.Opcoes, function (i, opt) {
+                        modelo += template.replace('#NAME#', parametroAdicional.Nome);
+                        modelo = modelo.replace(/#ID#/g, parametroAdicional.Nome + i);
+                        modelo = modelo.replace('#VALUE#', opt.Valor);
+                        modelo = modelo.replace('#TEXT#', opt.Texto + (opt.Descricao != undefined && opt.Descricao != null && opt.Descricao != "" ? ` <a href="javascript: swal('', '$${HtmlEncode(opt.Descricao.replace("'", "\'"))}')"><i class="fas fa-info-circle"></i></a>` : ''));
+                    });
+                }
+                else {
+                    if (parametroAdicional.Tipo == ParametroAdicionalEnum.Text || parametroAdicional.Tipo == ParametroAdicionalEnum.TextData) {
+                        modelo = $('#modal-anexo-input-text-modelo').html();
+                        modelo = modelo.replace('#TITLE#', parametroAdicional.Titulo);
+                        modelo = modelo.replace('#CLASS#', (parametroAdicional.Tipo == ParametroAdicionalEnum.TextData ? 'modal-anexo-input-data' : ''));
+                        modelo = modelo.replace('#DISPLAY#', (parametroAdicional.Oculto ? 'none' : 'visible'));
+                    }
+
+                    if (parametroAdicional.Tipo == ParametroAdicionalEnum.Checkbox) {
+                        modelo = $('#modal-anexo-input-checkbox-modelo').html();
+                        modelo = modelo.replace('#CLASS#', "");
+                    }
+
+                    modelo = modelo.replace('#LABEL#', parametroAdicional.Label);
+                    modelo = modelo.replace('#NAME#', parametroAdicional.Nome);
+                    modelo = modelo.replace('#ID#', parametroAdicional.Id);
+                    modelo = modelo.replace('#VALUE#', parametroAdicional.Valor);
+                }
+
+                modelo = modelo.replace('#CLASS_INPUT#', 'modal-anexo-parametro-adicional-input');
+                conteudo += modelo;
+            });
+
+            $('#modal-anexo-parametros-adicionais-div').html(conteudo);
+
+            $('.modal-anexo-input-data').datepicker({
+                forceParse: false,
+                language: '@Thread.CurrentThread.CurrentCulture',
+                autoclose: true,
+            });
+        }
+    }
+</script>

@@ -1,0 +1,14 @@
+﻿using Dados.Contexto;
+using Dados.Interface;
+using Dominio.Entidades;
+
+namespace Dados.Repositorio
+{
+    public class #ENTITY_NAME#Repositorio : BaseRepositorio<#ENTITY_NAME#>, I#ENTITY_NAME#Repositorio
+    {
+        public #ENTITY_NAME#Repositorio(ContextoBase contexto):base (contexto)
+        {
+            
+        }
+    }
+}

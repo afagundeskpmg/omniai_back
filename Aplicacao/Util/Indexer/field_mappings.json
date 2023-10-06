@@ -1,0 +1,26 @@
+{
+  "FieldMappings": {
+    "metadata_storage_path": "metadata_storage_path",
+    "organizations": "organizations",
+    "locations": "locations",
+    "people": "people",
+    "pii_entities": "pii_entities",
+    "keyphrases": "keyphrases",
+    "merged_content": "merged_content"
+  },
+  "OutputFieldMappings": {
+    "/document/people": "people",
+    "/document/organizations": "organizations",
+    "/document/locations": "locations",
+    "/document/keyphrases": "keyphrases",
+    "/document/language": "language",
+    "/document/translated_text": "translated_text",
+    "/document/pii_entities": "pii_entities",
+    "/document/masked_text": "masked_text",
+    "/document/merged_content": "merged_content",
+    "/document/normalized_images/*/text": "text",
+    "/document/normalized_images/*/layoutText": "layoutText",
+    "/document/normalized_images/*/imageTags/*/name": "imageTags",
+    "/document/normalized_images/*/imageCaption": "imageCaption"
+  }
+}

@@ -1,0 +1,9 @@
+﻿using Dominio.Entidades;
+
+namespace Dados.Interface
+{
+    public interface I#ENTITY_NAME#Repositorio : IBaseRepositorio<#ENTITY_NAME#>
+    {
+
+    }
+}

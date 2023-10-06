@@ -1,0 +1,40 @@
+﻿namespace Dominio.Entidades
+{
+    public enum ParametroAmbienteEnum
+    {
+        UsuarioSistemaId = 1,
+        URLPadrao = 2,
+        MailRelayFrom = 3,
+        MailRelayHost = 4,
+        MailRelayPort = 5,
+        MailRelayCredenciais = 6,
+        Manutencao = 7,
+        DiretorioArquivoLog = 8,
+        ArquivoLogNome = 9,       
+        UsuarioAdmin = 10,
+        BlobContainerNameAnexos = 11,
+        StorageConnection = 12,
+        StorageAccountName = 13,
+        StorageAccountKey = 14,
+        B2CTenantName = 15,
+        B2CClientId = 16,
+        B2CAPISignInPolicyId = 17,
+        B2CAPIMicrosoftB2COAuthToken = 18,
+        AzureKeyCredential = 19,
+        AzureOpenAIEndPoint = 20,
+        AzureOpenAIDeploymentName = 21,
+        AzureOpenAIMaxTokenQueryGen = 23,
+        AzureOpenAITemperatureQueryGen = 24,
+        AzureOpenAIMaxTokenQueryQuestion = 26,
+        AzureOpenAITemperatureQueryQuestion = 27,
+        AzureIndexerURI = 28,
+        AzureIndexerKeyCredential = 29,
+        B2CFunctionURL = 30,
+        B2CFunctionCreatUsers = 31,
+        DestinatariosUsuariosSistema = 32,
+        LimiteUsuariosEnvioEmail = 33,
+        AzureKeyCredentialOpenAI = 34,
+        AzureCognitiveSearchQuery = 35,
+        AzureBlobURI = 36
+    }
+}
